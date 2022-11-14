@@ -1,3 +1,4 @@
 FROM softonic/varnish:latest
 
-USER root
+RUN chown varnish /var/lib/varnish
+USER varnish
