@@ -1,4 +1,8 @@
 FROM softonic/varnish:latest
 
-RUN chown varnish /var/lib/varnish
-USER varnish
+ENV VARNISH_CACHE_SIZE=64m \
+	VARNISH_PORT=5000
+	
+COPY scripts/ /usr/local/bin/
+
+ENTRYPOINT ["/usr/local/bin/varnish-entrypoint"]

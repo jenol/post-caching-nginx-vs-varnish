@@ -6,15 +6,16 @@ volumes:
 services:
   varnish:
     container_name: varnish
+    # user: root
     build:
       context: .
       dockerfile: VarnishDockerfile
     volumes:
       - "./default.vcl:/etc/varnish/default.vcl"
     ports:
-      - "81:80"
-    tmpfs:
-      - /var/lib/varnish:exec
+      - "81:5000"
+    #tmpfs:
+     # - /var/lib/varnish:exec
     environment:
       - VARNISH_SIZE=2G  
     command: "-p default_keep=300"
