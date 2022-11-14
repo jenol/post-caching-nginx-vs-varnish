@@ -7,19 +7,42 @@ backend default {
     .port = "3000";
 }
 
+backend prometheus {
+    .host = "prometheus";
+    .port = "9090";
+}
+
 sub vcl_recv {
-	unset req.http.X-Body-Len;
-	unset req.http.x-cache;
-	std.log("Will cache POST for: " + req.http.host + req.url);
-	if (req.method == "POST") {
+
+	if (req.url == "/ready") {
+        return (synth(750));
+    }
+	
+	if (req.url == "/metrics") {
+        set req.backend_hint = prometheus;
+    } else {
+		set req.backend_hint = default;
+		unset req.http.X-Body-Len;
+		unset req.http.x-cache;
 		std.log("Will cache POST for: " + req.http.host + req.url);
-		std.cache_req_body(500KB);
-		set req.http.X-Body-Len = bodyaccess.len_req_body();
-		if (req.http.X-Body-Len == "-1") {
-			return(synth(400, "The request body size exceeds the limit"));
+		if (req.method == "POST") {
+			std.log("Will cache POST for: " + req.http.host + req.url);
+			std.cache_req_body(500KB);
+			set req.http.X-Body-Len = bodyaccess.len_req_body();
+			if (req.http.X-Body-Len == "-1") {
+				return(synth(400, "The request body size exceeds the limit"));
+			}
+			return (hash);
 		}
-		return (hash);
 	}
+}
+
+sub vcl_synth {
+    if (resp.status == 750) {
+        set resp.status = 200;
+        synthetic("Ok");
+        return(deliver);
+    }
 }
 
 sub vcl_hash {
